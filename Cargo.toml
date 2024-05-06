@@ -2,15 +2,15 @@
 name = "vollmond"
 version = "0.2.0"
 authors = ["puppetmaster"]
-edition = "2018"
+edition = "2021"
 #build = "build.rs"
 
 [dependencies]
 quad-snd = { git = "https://github.com/not-fl3/quad-snd", rev = "68691cf"  }
-macroquad = { git = "https://github.com/not-fl3/macroquad", rev = "a7e39df"  }
+macroquad = { git = "https://github.com/not-fl3/macroquad", rev = "7faf16a"  }
 
 [dependencies.miniquad]
-version = "0.3.0-alpha.22"
+version = "0.4.0"
 
 #[dependencies.macroquad]
 #path = "../macroquad"
@@ -26,16 +26,9 @@ version = "1.0.3"
 [dependencies.keyframe_derive]
 version = "1.0.0"
 
-[profile.dev.package.'*']
+[profile.release]
+lto = "fat"
+strip = "symbols"
 opt-level = 3
-
-#[profile.release]
-#incremental = true
-#lto = true
-
-#[build]
-#rustflags = ["-C", "link-arg=-fuse-ld=lld"]
-
-#[build-dependencies]
-#winres = "0.1"
-#image = "0.22.5"
+#codegen-units = 1
+panic = "abort"

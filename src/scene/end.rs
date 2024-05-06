@@ -20,7 +20,7 @@ impl End {
             ..Default::default()
         };
         // todo write end text
-        let font = load_ttf_font_from_bytes(include_bytes!("../../assets/fonts/GothicPixels.ttf"));
+        let font = load_ttf_font("./assets/fonts/GothicPixels.ttf").await.expect("Couldnt load main font end");
         let t1 = "You managed to bring\nthe four ingredients in time.\nHere you have the potion.\n\nThanks for playing my game.\n\n";
         let text1 = t1.to_string().split('\n').map(String::from).collect();
         End { 
@@ -38,20 +38,22 @@ impl End {
             self.start = false;
         }
         update_camera(self, vec2(0.0, 0.0));
-        set_camera(self.camera);
+        set_camera(&self.camera);
         set_default_camera();
         let tp = TextParams {
-            font: self.font,
             font_size: 80,
             font_scale: 0.5,
             color: FONT_COLOR,
+            font: Some(&self.font),
+            font_scale_aspect: 1.0,
+            rotation: 0.0,
         };
         for (i, line) in self.text1.iter().enumerate() {
             draw_text_ex(
                 line,
                 (screen_width() / 2.0) - 350.0,
                 (screen_height() / 2.0) - 350.0 + i as f32 * 80.0,
-                tp,
+                tp.clone(),
             );
         }
         draw_text_ex(

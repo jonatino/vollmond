@@ -99,8 +99,8 @@ impl Tilemap {
     }
 
     pub fn set_tileid_at(&mut self, layer: usize, new_id: Option<u32>, position: Vec2) {
-        let mut pos_x = position.x() as i32;
-        let mut pos_y = position.y() as i32;
+        let mut pos_x = position.x as i32;
+        let mut pos_y = position.y as i32;
         if pos_x % 8 != 0 {
             pos_x -= pos_x % 8;
         }
@@ -161,8 +161,8 @@ impl Tilemap {
     }
 
     pub fn get_id_at_position(&self, layer: usize, position: Vec2) -> Option<u32> {
-        let mut pos_x = position.x() as i32;
-        let mut pos_y = position.y() as i32;
+        let mut pos_x = position.x as i32;
+        let mut pos_y = position.y as i32;
         if pos_x % 8 != 0 {
             pos_x -= pos_x % 8;
         }
@@ -185,10 +185,10 @@ impl Tilemap {
     }
 
     fn is_inside_viewport(&self, position: Vec2) -> bool {
-        !(position.x() < self.viewport.x
-            || position.y() < self.viewport.y
-            || position.x() > self.viewport.x + self.viewport.w
-            || position.y() > self.viewport.y + self.viewport.h)
+        !(position.x < self.viewport.x
+            || position.y < self.viewport.y
+            || position.x > self.viewport.x + self.viewport.w
+            || position.y > self.viewport.y + self.viewport.h)
     }
     pub fn get_clip_from_id(&self, id: u32) -> Rect {
         self.tile_rectangles[&id]
@@ -230,29 +230,31 @@ impl Tilemap {
         };
         self.layers.push(layer);
     }
-    pub fn draw(&self, texture: Texture2D, position: Vec2, layer_to_draw: Option<usize>) {
+    pub fn draw(&self, texture: &Texture2D, position: Vec2, layer_to_draw: Option<usize>) {
         for (i, layer) in self.layers.iter().enumerate() {
             if layer.visibility && layer_to_draw.is_none() || layer_to_draw.is_some() && i == layer_to_draw.unwrap() {
                 for tile in layer.tiles.get_data().iter().filter(|t| t.is_some()) {
                     match tile {
                         None => (),
                         Some(tile) => {
-                            let tmp_pos = Vec2::new(position.x() + tile.position_x, position.y() + tile.position_y);
+                            let tmp_pos = Vec2::new(position.x + tile.position_x, position.y + tile.position_y);
                             draw_texture_ex(
-                                texture,
-                                tmp_pos.x(),
-                                tmp_pos.y(),
+                                &texture,
+                                tmp_pos.x,
+                                tmp_pos.y,
                                 layer.color,
                                 DrawTextureParams {
                                     dest_size: Some(tile.dest_size),
                                     source: Some(self.tile_rectangles[&tile.id]),
                                     rotation: tile.rotation,
+                                    flip_x: false,
+                                    flip_y: false,
                                     pivot: None,
                                 },
                             );
                             if DEBUG {
-                                draw_rectangle_lines(tmp_pos.x(), tmp_pos.y(), 8.0, 8.0, 0.1, GREEN);
-                                //draw_circle(tmp_pos.x(), tmp_pos.y(),0.5, RED); //low fps
+                                draw_rectangle_lines(tmp_pos.x, tmp_pos.y, 8.0, 8.0, 0.1, GREEN);
+                                //draw_circle(tmp_pos.x, tmp_pos.y,0.5, RED); //low fps
                             }
                         }
                     }

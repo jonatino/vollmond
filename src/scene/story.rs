@@ -34,7 +34,7 @@ impl Story {
             2,
             true,
         );
-        let font = load_ttf_font_from_bytes(include_bytes!("../../assets/fonts/GothicPixels.ttf"));
+        let font = load_ttf_font("./assets/fonts/GothicPixels.ttf").await.expect("Couldnt load main font in story");
         let t1 = "It is almost full moon.\nThe night of your transformation\nis about to begin.\nThe only thing that can stop it\nis the Moonshot potion.";
         let t2 = "Bring me a werewolf hair,\na piece of moonmilk,\nthe fruits of the moonseed\nand a moonflower.\nI can then brew\nthe moonshot for you.";
         let text1 = t1.to_string().split('\n').map(String::from).collect();
@@ -59,14 +59,16 @@ impl Story {
             self.timer.restart();
         }
         update_camera(self, vec2(0.0, 0.0));
-        set_camera(self.camera);
+        set_camera(&self.camera);
         //draw_texture_ex(self.texture1, 0.0, 0.0, WHITE, Default::default());
         set_default_camera();
         let tp = TextParams {
-            font: self.font,
             font_size: 80,
             font_scale: 0.5,
             color: FONT_COLOR,
+            font: Some(&self.font),
+            font_scale_aspect: 1.0,
+            rotation: 0.0,
         };
         if self.show_text1 {
             for (i, line) in self.text1.iter().enumerate() {
@@ -74,7 +76,7 @@ impl Story {
                     line,
                     (screen_width() / 2.0) - 330.0,
                     (screen_height() / 2.0) - 350.0 + i as f32 * 80.0,
-                    tp,
+                    tp.clone(),
                 );
             }
         } else {
@@ -83,7 +85,7 @@ impl Story {
                     line,
                     (screen_width() / 2.0) - 290.0,
                     (screen_height() / 2.0) - 350.0 + i as f32 * 80.0,
-                    tp,
+                    tp.clone(),
                 );
             }
         }
@@ -94,10 +96,12 @@ impl Story {
                 (screen_width() / 2.0) - 180.0,
                 (screen_height() / 2.0) + 250.0 + self.tween.value(),
                 TextParams {
-                    font: self.font,
                     font_size: 100,
                     font_scale: 0.5,
                     color: FONT_COLOR,
+                    font: Some(&self.font),
+                    font_scale_aspect: 1.0,
+                    rotation: 0.0,
                 },
             );
         }

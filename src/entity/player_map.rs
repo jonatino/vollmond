@@ -88,50 +88,50 @@ impl PlayerMap {
 
             self.collide_color = SKYBLUE;
             let velocity = MOVING_SPEED * moving_speed_factor;
-            let mut new_x = self.position.x();
-            let mut new_y = self.position.y();
+            let mut new_x = self.position.x;
+            let mut new_y = self.position.y;
 
             if is_key_down(KeyCode::W) || is_key_down(KeyCode::Up) {
-                if can_walk_up(vec2(self.position.x(), self.position.y() - velocity).round(), tilemap) {
+                if can_walk_up(vec2(self.position.x, self.position.y - velocity).round(), tilemap) {
                     if self.animation_state != AnimationState::WalkUp {
                         self.animations.get_mut(&self.animation_state).unwrap().reset();
                         self.animation_state = AnimationState::WalkUp;
                         self.animations.get_mut(&self.animation_state).unwrap().repeating = true;
                     }
-                    new_y = self.position.y() - velocity;
+                    new_y = self.position.y - velocity;
                 } else {
                     self.collide_color = GOLD;
                 }
             } else if is_key_down(KeyCode::S) || is_key_down(KeyCode::Down) {
-                if can_walk_down(vec2(self.position.x(), self.position.y() + velocity).round(), tilemap) {
+                if can_walk_down(vec2(self.position.x, self.position.y + velocity).round(), tilemap) {
                     if self.animation_state != AnimationState::WalkDown {
                         self.animations.get_mut(&self.animation_state).unwrap().reset();
                         self.animation_state = AnimationState::WalkDown;
                         self.animations.get_mut(&self.animation_state).unwrap().repeating = true;
                     }
-                    new_y = self.position.y() + velocity;
+                    new_y = self.position.y + velocity;
                 } else {
                     self.collide_color = GOLD;
                 }
             } else if is_key_down(KeyCode::A) || is_key_down(KeyCode::Left) {
-                if can_walk_left(vec2(self.position.x() - velocity, self.position.y()).round(), tilemap) {
+                if can_walk_left(vec2(self.position.x - velocity, self.position.y).round(), tilemap) {
                     if self.animation_state != AnimationState::WalkLeft {
                         self.animations.get_mut(&self.animation_state).unwrap().reset();
                         self.animation_state = AnimationState::WalkLeft;
                         self.animations.get_mut(&self.animation_state).unwrap().repeating = true;
                     }
-                    new_x = self.position.x() - velocity;
+                    new_x = self.position.x - velocity;
                 } else {
                     self.collide_color = GOLD;
                 }
             } else if is_key_down(KeyCode::D) || is_key_down(KeyCode::Right) {
-                if can_walk_right(vec2(self.position.x() + velocity, self.position.y()).round(), tilemap) {
+                if can_walk_right(vec2(self.position.x + velocity, self.position.y).round(), tilemap) {
                     if self.animation_state != AnimationState::WalkRight {
                         self.animations.get_mut(&self.animation_state).unwrap().reset();
                         self.animation_state = AnimationState::WalkRight;
                         self.animations.get_mut(&self.animation_state).unwrap().repeating = true;
                     }
-                    new_x = self.position.x() + velocity;
+                    new_x = self.position.x + velocity;
                 } else {
                     self.collide_color = GOLD;
                 }
@@ -169,8 +169,8 @@ impl PlayerMap {
                 }
             };
 
-            self.position.set_x(new_x);
-            self.position.set_y(new_y);
+            self.position.x = new_x;
+            self.position.y = new_y;
 
             // map side level logic
             if id_center == Some(HAUS) && self.last_id != Some(HAUS) {
@@ -218,11 +218,11 @@ impl PlayerMap {
         self.position.round()
     }
 
-    pub fn draw(&self, texture: Texture2D) {
+    pub fn draw(&self, texture: &Texture2D) {
         draw_texture_ex(
-            texture,
-            self.position_rounded().x(),
-            self.position_rounded().y(),
+            &texture,
+            self.position_rounded().x,
+            self.position_rounded().y,
             WHITE,
             DrawTextureParams {
                 source: self.animations.get(&self.animation_state).unwrap().source(),
@@ -230,12 +230,12 @@ impl PlayerMap {
             },
         );
         if DEBUG {
-            draw_circle(self.position_rounded().x(), self.position_rounded().y(), 0.5, RED);
-            draw_rectangle_lines(self.position_rounded().x(), self.position_rounded().y(), 8.0, 8.0, 0.1, self.collide_color);
-            draw_circle((self.position_rounded() + vec2(2.0, 3.0)).x(), (self.position_rounded() + vec2(2.0, 3.0)).y(), 0.5, YELLOW);
-            draw_circle((self.position_rounded() + vec2(2.0, 7.0)).x(), (self.position_rounded() + vec2(2.0, 7.0)).y(), 0.5, PINK);
-            draw_circle((self.position_rounded() + vec2(5.5, 7.0)).x(), (self.position_rounded() + vec2(5.5, 7.0)).y(), 0.5, GREEN);
-            draw_circle((self.position_rounded() + vec2(5.5, 3.0)).x(), (self.position_rounded() + vec2(5.5, 3.0)).y(), 0.5, BLUE);
+            draw_circle(self.position_rounded().x, self.position_rounded().y, 0.5, RED);
+            draw_rectangle_lines(self.position_rounded().x, self.position_rounded().y, 8.0, 8.0, 0.1, self.collide_color);
+            draw_circle((self.position_rounded() + vec2(2.0, 3.0)).x, (self.position_rounded() + vec2(2.0, 3.0)).y, 0.5, YELLOW);
+            draw_circle((self.position_rounded() + vec2(2.0, 7.0)).x, (self.position_rounded() + vec2(2.0, 7.0)).y, 0.5, PINK);
+            draw_circle((self.position_rounded() + vec2(5.5, 7.0)).x, (self.position_rounded() + vec2(5.5, 7.0)).y, 0.5, GREEN);
+            draw_circle((self.position_rounded() + vec2(5.5, 3.0)).x, (self.position_rounded() + vec2(5.5, 3.0)).y, 0.5, BLUE);
         }
     }
 }

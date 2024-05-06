@@ -53,13 +53,11 @@ impl Title {
             target: vec2(0.0, 0.0),
             ..Default::default()
         };
-        let image = Image::from_file_with_format(include_bytes!("../../assets/images/title.png"), None);
-        let background: Texture2D = load_texture_from_image(&image);
-        set_texture_filter(background, FilterMode::Nearest);
-        let image2 = Image::from_file_with_format(include_bytes!("../../assets/images/vollmond.png"), None);
-        let title: Texture2D = load_texture_from_image(&image2);
-        set_texture_filter(title, FilterMode::Nearest);
-        let font = load_ttf_font_from_bytes(include_bytes!("../../assets/fonts/GothicPixels.ttf"));
+        let background = load_texture("./assets/images/title.png").await.expect("Couldnt load title.png");
+        background.set_filter(FilterMode::Nearest);
+        let title = load_texture("./assets/images/vollmond.png").await.expect("Couldnt load vollmond.png");
+        title.set_filter(FilterMode::Nearest);
+        let font = load_ttf_font("./assets/fonts/GothicPixels.ttf").await.expect("Couldnt load main font title");
         Title {
             background,
             font,
@@ -82,10 +80,10 @@ impl Title {
         self.animations[1].update();
         self.animations[2].update();
         update_camera(self, vec2(0.0, 0.0));
-        set_camera(self.camera);
-        draw_texture_ex(self.background, -100.0, -50.0, WHITE, Default::default());
+        set_camera(&self.camera);
+        draw_texture_ex(&self.background, -100.0, -50.0, WHITE, Default::default());
         draw_texture_ex(
-            self.title,
+            &self.title,
             -78.0,
             -90.0 + self.animations[0].value(),
             WHITE,
@@ -97,10 +95,12 @@ impl Title {
             (screen_width() / 2.0) - 180.0,
             (screen_height() / 2.0) + 250.0 + self.animations[1].value(),
             TextParams {
-                font: self.font,
+                font: Some(&self.font),
                 font_size: 100,
                 font_scale: 0.5,
                 color: FONT_COLOR,
+                font_scale_aspect: 1.0,
+                rotation: 0.0,
             },
         );
         process_action(self, mixer)

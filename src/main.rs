@@ -66,7 +66,7 @@ async fn main() {
                 if let Some(gs) = story.run(&mut mixer) {
                     main_state = gs;
                     if game.player_side.ingredients > 0 {
-                        game.reset()
+                        game.reset().await
                     }
                 }
             }

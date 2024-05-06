@@ -60,12 +60,12 @@ pub struct Game {
 impl Game {
     pub async fn init() -> Game {
         let tween = Tween::from_keyframes(vec![Keyframe::new(0.0, 0.0, EaseOut), Keyframe::new(4.0, 0.5, EaseOut), Keyframe::new(0.0, 1.0, EaseIn)], 0, 2, true);
-        let map_texture = get_map_texture();
-        let side_texture = get_side_texture();
+        let map_texture = get_map_texture().await;
+        let side_texture = get_side_texture().await;
         let map_tilemap = get_map_tilemap();
         let player_map = PlayerMap::new(&map_tilemap);
 
-        let player_side = PlayerSide::new();
+        let player_side = PlayerSide::new().await;
 
         let camera_map = Camera2D {
             zoom: vec2(MAP_ZOOM / screen_width() * 2.0, -MAP_ZOOM / screen_height() * 2.0),
@@ -103,9 +103,9 @@ impl Game {
         }
     }
 
-    pub fn reset(&mut self) {
+    pub async fn reset(&mut self) {
         self.tilemaps = get_tilemaps();
-        self.player_side = PlayerSide::new();
+        self.player_side = PlayerSide::new().await;
         self.player_map = PlayerMap::new(&self.map_tilemap);
         self.game_state = GameState::MAP;
         self.init_sidemap = true;
@@ -138,9 +138,9 @@ impl Game {
                 }
                 update_map_camera(self, self.player_map.position_rounded());
                 draw_rectangle(0.0, 0.0, screen_width(), screen_height(), MAP_WATER_COLOR);
-                set_camera(self.camera_map);
-                self.map_tilemap.draw(self.map_texture, vec2(0.0, 0.0), None);
-                self.player_map.draw(self.map_texture);
+                set_camera(&self.camera_map);
+                self.map_tilemap.draw(&self.map_texture, vec2(0.0, 0.0), None);
+                self.player_map.draw(&self.map_texture);
                 set_default_camera();
                 draw_rectangle(0.0, 0.0, screen_width(), screen_height(), DARKNESS_COLOR);
             }
@@ -237,25 +237,25 @@ impl Game {
                     self.game_state = gs;
                 }
                 update_sky_camera(self);
-                set_camera(self.camera_sky);
+                set_camera(&self.camera_sky);
                 if self.draw_sky {
                     self.tilemaps
                         .get(&self.current_tilemap_key)
                         .unwrap()
-                        .draw(self.side_texture, vec2(0.0, 0.0), Some(self.tilemaps.get(&self.current_tilemap_key).unwrap().get_layer_id("sky")));
+                        .draw(&self.side_texture, vec2(0.0, 0.0), Some(self.tilemaps.get(&self.current_tilemap_key).unwrap().get_layer_id("sky")));
                 }
                 set_default_camera();
                 update_side_camera(self, self.player_side.position());
-                set_camera(self.camera_side);
+                set_camera(&self.camera_side);
                 self.tilemaps.get(&self.current_tilemap_key).unwrap().draw(
-                    self.side_texture,
+                    &self.side_texture,
                     vec2(0.0, 0.0),
                     Some(self.tilemaps.get(&self.current_tilemap_key).unwrap().get_layer_id("background")),
                 );
                 self.tilemaps
                     .get(&self.current_tilemap_key)
                     .unwrap()
-                    .draw(self.side_texture, vec2(0.0, 0.0), Some(self.tilemaps.get(&self.current_tilemap_key).unwrap().get_layer_id("map")));
+                    .draw(&self.side_texture, vec2(0.0, 0.0), Some(self.tilemaps.get(&self.current_tilemap_key).unwrap().get_layer_id("map")));
                 //draw Items
                 for id in 474..479 {
                     let item_pos = self
@@ -265,9 +265,9 @@ impl Game {
                         .get_all_position_from_id(self.tilemaps.get(&self.current_tilemap_key).unwrap().get_layer_id("logic"), id);
                     if !item_pos.is_empty() {
                         draw_texture_ex(
-                            self.side_texture,
-                            item_pos[0].x(),
-                            (item_pos[0].y() + self.item_tween.value()).round(),
+                            &self.side_texture,
+                            item_pos[0].x,
+                            (item_pos[0].y + self.item_tween.value()).round(),
                             WHITE,
                             DrawTextureParams {
                                 source: Some(self.tilemaps.get(&self.current_tilemap_key).unwrap().get_clip_from_id(id)),
@@ -280,7 +280,7 @@ impl Game {
                 self.tilemaps
                     .get(&self.current_tilemap_key)
                     .unwrap()
-                    .draw(self.side_texture, vec2(0.0, 0.0), Some(self.tilemaps.get(&self.current_tilemap_key).unwrap().get_layer_id("front")));
+                    .draw(&self.side_texture, vec2(0.0, 0.0), Some(self.tilemaps.get(&self.current_tilemap_key).unwrap().get_layer_id("front")));
                 set_default_camera();
             }
         }
@@ -295,8 +295,8 @@ fn update_map_camera(game: &mut Game, new_target: Vec2) {
 }
 
 fn update_side_camera(game: &mut Game, new_target: Vec2) {
-    if new_target.x() > 290.0 && new_target.x() < 670.0 {
-        game.camera_side.target.set_x(new_target.x());
+    if new_target.x > 290.0 && new_target.x < 670.0 {
+        game.camera_side.target.x = new_target.x;
     }
     game.camera_side.zoom = vec2(SIDE_ZOOM / screen_width() * 2.0, -SIDE_ZOOM / screen_height() * 2.0);
 }
@@ -304,16 +304,14 @@ fn update_sky_camera(game: &mut Game) {
     game.camera_sky.zoom = vec2(SIDE_ZOOM / screen_width() * 2.0, -SIDE_ZOOM / screen_height() * 2.0);
 }
 
-fn get_map_texture() -> Texture2D {
-    let image = Image::from_file_with_format(include_bytes!("../../assets/images/map.png"), None);
-    let texture: Texture2D = load_texture_from_image(&image);
-    set_texture_filter(texture, FilterMode::Nearest);
+async fn get_map_texture() -> Texture2D {
+    let texture = load_texture("./assets/images/map.png").await.expect("Couldnt load map.png");
+    texture.set_filter(FilterMode::Nearest);
     texture
 }
-fn get_side_texture() -> Texture2D {
-    let image = Image::from_file_with_format(include_bytes!("../../assets/images/side.png"), None);
-    let texture: Texture2D = load_texture_from_image(&image);
-    set_texture_filter(texture, FilterMode::Nearest);
+async fn get_side_texture() -> Texture2D {
+    let texture = load_texture("./assets/images/side.png").await.expect("Couldnt load side.png");
+    texture.set_filter(FilterMode::Nearest);
     texture
 }
 

@@ -80,8 +80,8 @@ pub struct PlayerSide {
 }
 
 impl PlayerSide {
-    pub fn new() -> Self {
-        let spritesheet = get_player_spritesheet();
+    pub async fn new() -> Self {
+        let spritesheet = get_player_spritesheet().await;
         let animations = get_animations();
         Self {
             ingredients: 0,
@@ -91,8 +91,8 @@ impl PlayerSide {
             air_timer: 0,
             jump_up_timer: 0,
             jump_down_timer: 0,
-            direction: Vec2::zero(),
-            position: Vec2::zero(),
+            direction: Vec2::ZERO,
+            position: Vec2::ZERO,
             collide_color: SKYBLUE,
             spritesheet,
             need_reset: true,
@@ -133,14 +133,14 @@ impl PlayerSide {
         self.collide_color = SKYBLUE;
 
         let delta = get_frame_time();
-        let mut new_x = self.position.x();
-        let mut new_y = self.position.y();
+        let mut new_x = self.position.x;
+        let mut new_y = self.position.y;
 
         if self.timer.finished() {
             //wait before moving
             if is_key_down(KeyCode::A) || is_key_down(KeyCode::Left) {
                 let distance = 4.0 * MOVE_SPEED_CURVE[self.moving_timer] * delta;
-                if can_walk_left(vec2(self.position.x() - distance, self.position.y()), tilemap) {
+                if can_walk_left(vec2(self.position.x - distance, self.position.y), tilemap) {
                     if self.animation_state != AnimationState::RUNLEFT {
                         self.animations.get_mut(&self.animation_state).unwrap().reset();
                         self.animation_state = AnimationState::RUNLEFT;
@@ -148,7 +148,7 @@ impl PlayerSide {
                     }
                     self.state = State::RUN;
                     self.direction = vec2(-1.0, 0.0);
-                    new_x = self.position.x() - distance;
+                    new_x = self.position.x - distance;
                     if self.moving_timer < MOVE_SPEED_CURVE.len() - 1 {
                         self.moving_timer += 1;
                     }
@@ -159,7 +159,7 @@ impl PlayerSide {
                 }
             } else if is_key_down(KeyCode::D) || is_key_down(KeyCode::Right) {
                 let distance = MOVE_FACTOR * MOVE_SPEED_CURVE[self.moving_timer] * delta;
-                if can_walk_right(vec2(self.position.x() + distance, self.position.y()), tilemap) {
+                if can_walk_right(vec2(self.position.x + distance, self.position.y), tilemap) {
                     if self.animation_state != AnimationState::RUNRIGHT {
                         self.animations.get_mut(&self.animation_state).unwrap().reset();
                         self.animation_state = AnimationState::RUNRIGHT;
@@ -167,7 +167,7 @@ impl PlayerSide {
                     }
                     self.state = State::RUN;
                     self.direction = vec2(1.0, 0.0);
-                    new_x = self.position.x() + distance;
+                    new_x = self.position.x + distance;
                     if self.moving_timer < MOVE_SPEED_CURVE.len() - 1 {
                         self.moving_timer += 1;
                     }
@@ -185,13 +185,13 @@ impl PlayerSide {
                     }
                     if self.break_timer < BREAK_SPEED_CURVE.len() - 1 {
                         let distance = (MOVE_FACTOR + 2.0) * BREAK_SPEED_CURVE[self.break_timer] * delta;
-                        if self.direction.x() > 0.0 {
+                        if self.direction.x > 0.0 {
                             // right
-                            if can_walk_right(vec2(self.position.x() + distance, self.position.y()), tilemap) {
-                                new_x = self.position.x() + distance;
+                            if can_walk_right(vec2(self.position.x + distance, self.position.y), tilemap) {
+                                new_x = self.position.x + distance;
                             }
-                        } else if can_walk_left(vec2(self.position.x() - distance, self.position.y()), tilemap) {
-                            new_x = self.position.x() - distance;
+                        } else if can_walk_left(vec2(self.position.x - distance, self.position.y), tilemap) {
+                            new_x = self.position.x - distance;
                         }
                         self.break_timer += 1;
                     } else {
@@ -220,15 +220,15 @@ impl PlayerSide {
             };
             // jump
             if (is_key_down(KeyCode::Space) || is_key_down(KeyCode::Up)) && (self.jump_state == JumpState::JUMP || self.jump_state == JumpState::NOT) {
-                if self.jump_up_timer < JUMP_UP_CURVE.len() - 1 && can_jump_up(vec2(self.position.x(), self.position.y()), tilemap) {
+                if self.jump_up_timer < JUMP_UP_CURVE.len() - 1 && can_jump_up(vec2(self.position.x, self.position.y), tilemap) {
                     if self.jump_state == JumpState::NOT {
                         self.mixer.play(self.jump_sound.clone());
                         self.jump_state = JumpState::JUMP;
                     }
                     self.jump_up_timer += 1;
                     //todo check if player can jump up
-                    new_y = self.position.y() - JUMP_UP_FACTOR + JUMP_UP_CURVE[self.jump_up_timer] * delta;
-                    new_x += self.direction.x() * 0.2;
+                    new_y = self.position.y - JUMP_UP_FACTOR + JUMP_UP_CURVE[self.jump_up_timer] * delta;
+                    new_x += self.direction.x * 0.2;
                 } else {
                     self.jump_state = JumpState::AIR;
                 }
@@ -250,12 +250,12 @@ impl PlayerSide {
             }
 
             if self.jump_state == JumpState::DOWN || self.jump_state == JumpState::NOT {
-                if can_walk_down(vec2(self.position.x(), self.position.y()), tilemap) {
+                if can_walk_down(vec2(self.position.x, self.position.y), tilemap) {
                     if self.jump_down_timer < JUMP_DOWN_CURVE.len() - 1 {
                         self.jump_down_timer += 1;
                     }
-                    new_y = self.position.y() + JUMP_DOWN_FACTOR + JUMP_DOWN_CURVE[self.jump_down_timer] * delta;
-                    new_x += self.direction.x() * 0.2;
+                    new_y = self.position.y + JUMP_DOWN_FACTOR + JUMP_DOWN_CURVE[self.jump_down_timer] * delta;
+                    new_x += self.direction.x * 0.2;
                     self.jump_state = JumpState::DOWN;
                 } else {
                     self.jump_down_timer = 0;
@@ -267,14 +267,14 @@ impl PlayerSide {
 
             // fix for player inside wall //todo fixme
             if self.position.abs_diff_eq(vec2(new_x, new_y), FLOAT_CMP_ERROR_MARGIN) {
-                if self.position.y() % 8.0 > 0.0 {
-                    self.position = vec2(self.position.x(), self.position.y() - self.position.y() % 8.0);
+                if self.position.y % 8.0 > 0.0 {
+                    self.position = vec2(self.position.x, self.position.y - self.position.y % 8.0);
                 }
                 self.direction = vec2(0.0, 0.0);
-                self.position.set_x(new_x);
+                self.position.x = new_x;
             } else {
-                self.position.set_x(new_x);
-                self.position.set_y(new_y);
+                self.position.x = new_x;
+                self.position.y = new_y;
             }
 
             // item pickup logic
@@ -315,9 +315,9 @@ impl PlayerSide {
 
     pub fn draw(&self) {
         draw_texture_ex(
-            self.spritesheet,
-            self.position().x() - 2.0,
-            self.position().y(),
+            &self.spritesheet,
+            self.position().x - 2.0,
+            self.position().y,
             WHITE,
             DrawTextureParams {
                 source: self.animations.get(&self.animation_state).unwrap().source(),
@@ -325,15 +325,15 @@ impl PlayerSide {
             },
         );
         if DEBUG {
-            draw_circle(self.position.x().round(), self.position.y().round(), 0.5, RED);
-            draw_rectangle_lines(self.position().x(), self.position().y(), 16.0, 16.0, 0.1, self.collide_color);
+            draw_circle(self.position.x.round(), self.position.y.round(), 0.5, RED);
+            draw_rectangle_lines(self.position().x, self.position().y, 16.0, 16.0, 0.1, self.collide_color);
             draw_text(&format!("{:?}", &self.state), 400.0, 5.0, 14.0, WHITE);
-            draw_circle((self.position + vec2(0.0, 1.0)).x(), (self.position + vec2(0.0, 1.0)).y(), 0.5, BLUE); //left up
-            draw_circle((self.position + vec2(0.0, 15.0)).x(), (self.position + vec2(0.0, 15.0)).y(), 0.5, BLUE); //left down)
-            draw_circle((self.position + vec2(7.0, 0.0)).x(), (self.position + vec2(7.0, 0.0)).y(), 0.5, LIME); //
-            draw_circle((self.position + vec2(7.0, 8.0)).x(), (self.position + vec2(8.0, 8.0)).y(), 0.5, LIME);
-            draw_circle((self.position + vec2(0.0, 16.0)).x(), (self.position + vec2(0.0, 16.0)).y(), 0.5, GREEN);
-            draw_circle((self.position + vec2(8.0, 16.0)).x(), (self.position + vec2(8.0, 16.0)).y(), 0.5, GREEN);
+            draw_circle((self.position + vec2(0.0, 1.0)).x, (self.position + vec2(0.0, 1.0)).y, 0.5, BLUE); //left up
+            draw_circle((self.position + vec2(0.0, 15.0)).x, (self.position + vec2(0.0, 15.0)).y, 0.5, BLUE); //left down)
+            draw_circle((self.position + vec2(7.0, 0.0)).x, (self.position + vec2(7.0, 0.0)).y, 0.5, LIME); //
+            draw_circle((self.position + vec2(7.0, 8.0)).x, (self.position + vec2(8.0, 8.0)).y, 0.5, LIME);
+            draw_circle((self.position + vec2(0.0, 16.0)).x, (self.position + vec2(0.0, 16.0)).y, 0.5, GREEN);
+            draw_circle((self.position + vec2(8.0, 16.0)).x, (self.position + vec2(8.0, 16.0)).y, 0.5, GREEN);
         }
     }
 }
@@ -420,9 +420,8 @@ fn get_animations() -> HashMap<AnimationState, TileAnimation> {
     hashmap
 }
 
-fn get_player_spritesheet() -> Texture2D {
-    let image = Image::from_file_with_format(include_bytes!("../../assets/images/player.png"), None);
-    let spritesheet: Texture2D = load_texture_from_image(&image);
-    set_texture_filter(spritesheet, FilterMode::Nearest);
+async fn get_player_spritesheet() -> Texture2D {
+    let spritesheet = load_texture("./assets/images/player.png").await.expect("Couldnt load player.png");
+    spritesheet.set_filter(FilterMode::Nearest);
     spritesheet
 }

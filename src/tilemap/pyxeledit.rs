@@ -10,8 +10,8 @@ impl PyxelTilemap {
         pyxeltilemap
     }
     pub fn get_id_at_position(&self, layer: Layers, position: Vec2) -> Option<i32> {
-        let x = position.x() as i32 / self.tile_width;
-        let y = position.y() as i32 / self.tile_height;
+        let x = position.x as i32 / self.tile_width;
+        let y = position.y as i32 / self.tile_height;
         let i = (x * y) as usize;
         match layer.tiles.get(i) {
             Some(tile) => {
